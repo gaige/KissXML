@@ -302,6 +302,7 @@ static void MarkDeath(void *xmlPtr, DDXMLNode *wrapper);
 
 - (id)copyWithZone:(NSZone *)zone
 {
+#pragma unused(zone)
 #if DDXML_DEBUG_MEMORY_ISSUES
 	DDXMLNotZombieAssert();
 #endif
@@ -872,6 +873,7 @@ static void MarkDeath(void *xmlPtr, DDXMLNode *wrapper);
 
 - (xmlStdPtr)_XPathPreProcess:(NSMutableString *)result
 {
+#pragma unused(result)
 	// This is a private/internal method
 	
 	// Note: DDXMLNamespaceNode overrides this method
@@ -1242,6 +1244,98 @@ static void MarkDeath(void *xmlPtr, DDXMLNode *wrapper);
 			
 			ns = ns->next;
 		}
+	}
+	
+	xpathObj = xmlXPathEvalExpression([xpath dd_xmlChar], xpathCtx);
+	
+	NSArray *result;
+	
+	if(xpathObj == NULL)
+	{
+		if(error) *error = [[self class] lastError];
+		result = nil;
+	}
+	else
+	{
+		if(error) *error = nil;
+		
+		int count = xmlXPathNodeSetGetLength(xpathObj->nodesetval);
+		
+		if(count == 0)
+		{
+			result = [NSArray array];
+		}
+		else
+		{
+			NSMutableArray *mResult = [NSMutableArray arrayWithCapacity: (NSUInteger)count];
+			
+			int i;
+			for (i = 0; i < count; i++)
+			{
+				xmlNodePtr node = xpathObj->nodesetval->nodeTab[i];
+				
+				[mResult addObject:[DDXMLNode nodeWithUnknownPrimitive:(xmlKindPtr)node owner:self]];
+			}
+			
+			result = mResult;
+		}
+	}
+	
+	if(xpathObj) xmlXPathFreeObject(xpathObj);
+	if(xpathCtx) xmlXPathFreeContext(xpathCtx);
+	
+	if (isTempDoc)
+	{
+		xmlUnlinkNode((xmlNodePtr)genericPtr);
+		xmlFreeDoc(doc);
+		
+		// xmlUnlinkNode doesn't remove the doc ptr
+		[[self class] recursiveStripDocPointersFromNode:(xmlNodePtr)genericPtr];
+	}
+	
+	return result;
+}
+
+-(NSArray *)nodesForXPath:(NSString *)xpath withNamespaceMap: (NSDictionary*)nsMap error:(NSError **)error
+{
+#if DDXML_DEBUG_MEMORY_ISSUES
+	DDXMLNotZombieAssert();
+#endif
+	
+	xmlXPathContextPtr xpathCtx;
+	xmlXPathObjectPtr xpathObj;
+	
+	BOOL isTempDoc = NO;
+	xmlDocPtr doc;
+	
+	if (IsXmlDocPtr(genericPtr))
+	{
+		doc = (xmlDocPtr)genericPtr;
+	}
+	else if (IsXmlNodePtr(genericPtr))
+	{
+		doc = ((xmlNodePtr)genericPtr)->doc;
+		
+		if(doc == NULL)
+		{
+			isTempDoc = YES;
+			
+			doc = xmlNewDoc(NULL);
+			xmlDocSetRootElement(doc, (xmlNodePtr)genericPtr);
+		}
+	}
+	else
+	{
+		return nil;
+	}
+	
+	xpathCtx = xmlXPathNewContext(doc);
+	xpathCtx->node = (xmlNodePtr)genericPtr;
+    
+	for(NSString *prefix in [nsMap allKeys]) {
+		NSString *href = [nsMap objectForKey: prefix];
+		
+		xmlXPathRegisterNs(xpathCtx, [prefix dd_xmlChar], [href dd_xmlChar]);
 	}
 	
 	xpathObj = xmlXPathEvalExpression([xpath dd_xmlChar], xpathCtx);
@@ -1967,6 +2061,7 @@ static void MarkDeath(void *xmlPtr, DDXMLNode *wrapper);
 
 static void MyErrorHandler(void * userData, xmlErrorPtr error)
 {
+#pragma unused(userData)
 	// This method is called by libxml when an error occurs.
 	// We register for this error in the initialize method below.
 	
@@ -2234,6 +2329,7 @@ BOOL DDXMLIsZombie(void *xmlPtr, DDXMLNode *wrapper)
 
 + (instancetype)nodeWithPrimitive:(xmlKindPtr)kindPtr owner:(DDXMLNode *)owner
 {
+#pragma unused(kindPtr,owner)
 	// Promote initializers which use proper parameter types to enable compiler to catch more mistakes.
 	NSAssert(NO, @"Use nodeWithNsPrimitive:nsParent:owner:");
 	
@@ -2242,6 +2338,7 @@ BOOL DDXMLIsZombie(void *xmlPtr, DDXMLNode *wrapper)
 
 - (instancetype)initWithPrimitive:(xmlKindPtr)kindPtr owner:(DDXMLNode *)inOwner
 {
+#pragma unused(kindPtr,inOwner)
 	// Promote initializers which use proper parameter types to enable compiler to catch more mistakes.
 	NSAssert(NO, @"Use initWithNsPrimitive:nsParent:owner:");
 	
@@ -2397,6 +2494,7 @@ BOOL DDXMLIsZombie(void *xmlPtr, DDXMLNode *wrapper)
 
 - (DDXMLNode *)childAtIndex:(NSUInteger)index
 {
+#pragma unused(index)
 #if DDXML_DEBUG_MEMORY_ISSUES
 	DDXMLNotZombieAssert();
 #endif
@@ -2499,6 +2597,7 @@ BOOL DDXMLIsZombie(void *xmlPtr, DDXMLNode *wrapper)
 
 - (void)setURI:(NSString *)URI
 {
+#pragma unused(URI)
 #if DDXML_DEBUG_MEMORY_ISSUES
 	DDXMLNotZombieAssert();
 #endif
@@ -2561,6 +2660,7 @@ BOOL DDXMLIsZombie(void *xmlPtr, DDXMLNode *wrapper)
 
 + (instancetype)nodeWithPrimitive:(xmlKindPtr)kindPtr owner:(DDXMLNode *)owner
 {
+#pragma unused(kindPtr,owner)
 	// Promote initializers which use proper parameter types to enable compiler to catch more mistakes.
 	NSAssert(NO, @"Use nodeWithAttrPrimitive:nsParent:owner:");
 	
@@ -2569,6 +2669,7 @@ BOOL DDXMLIsZombie(void *xmlPtr, DDXMLNode *wrapper)
 
 - (instancetype)initWithPrimitive:(xmlKindPtr)kindPtr owner:(DDXMLNode *)inOwner
 {
+#pragma unused(kindPtr,inOwner)
 	// Promote initializers which use proper parameter types to enable compiler to catch more mistakes.
 	NSAssert(NO, @"Use initWithAttrPrimitive:nsParent:owner:");
 	
@@ -2824,6 +2925,8 @@ BOOL DDXMLIsZombie(void *xmlPtr, DDXMLNode *wrapper)
 @implementation DDXMLInvalidNode
 
 // #pragma mark Properties
+_Pragma("clang diagnostic push");
+_Pragma("clang diagnostic ignored \"-Wunused-parameter\"");
 
 - (DDXMLNodeKind)kind {
 	return DDXMLInvalidKind;
@@ -2933,6 +3036,7 @@ BOOL DDXMLIsZombie(void *xmlPtr, DDXMLNode *wrapper)
 - (NSArray *)objectsForXQuery:(NSString *)xquery error:(NSError **)error {
 	return [NSArray array];
 }
+_Pragma("clang diagnostic pop");
 
 @end
 

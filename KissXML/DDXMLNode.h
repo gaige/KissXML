@@ -64,17 +64,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (id)elementWithName:(NSString *)name children:(nullable NSArray<DDXMLNode *> *)children attributes:(nullable NSArray<DDXMLNode *> *)attributes;
 
-+ (id)attributeWithName:(NSString *)name stringValue:(NSString *)stringValue;
++ (id _Nullable)attributeWithName:(NSString *)name stringValue:(NSString *)stringValue;
 
-+ (id)attributeWithName:(NSString *)name URI:(NSString *)URI stringValue:(NSString *)stringValue;
++ (id _Nullable)attributeWithName:(NSString *)name URI:(NSString *)URI stringValue:(NSString *)stringValue;
 
-+ (id)namespaceWithName:(NSString *)name stringValue:(NSString *)stringValue;
++ (id _Nullable)namespaceWithName:(NSString *)name stringValue:(NSString *)stringValue;
 
-+ (id)processingInstructionWithName:(NSString *)name stringValue:(NSString *)stringValue;
++ (id _Nullable)processingInstructionWithName:(NSString *)name stringValue:(NSString *)stringValue;
 
-+ (id)commentWithStringValue:(NSString *)stringValue;
++ (id _Nullable)commentWithStringValue:(NSString *)stringValue;
 
-+ (id)textWithStringValue:(NSString *)stringValue;
++ (id _Nullable)textWithStringValue:(NSString *)stringValue;
 
 //+ (instancetype)DTDNodeWithXMLString:(NSString *)string;
 
@@ -134,6 +134,8 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark --- XPath/XQuery ---
 
 - (nullable NSArray<__kindof DDXMLNode *> *)nodesForXPath:(NSString *)xpath error:(NSError **)error;
+- (nullable NSArray<__kindof DDXMLNode *> *)nodesForXPath:(NSString *)xpath withNamespaceMap: (NSDictionary*)nsMap error:(NSError **)error;
+
 //- (NSArray *)objectsForXQuery:(NSString *)xquery constants:(NSDictionary *)constants error:(NSError **)error;
 //- (NSArray *)objectsForXQuery:(NSString *)xquery error:(NSError **)error;
 

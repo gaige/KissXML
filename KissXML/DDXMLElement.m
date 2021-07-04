@@ -42,6 +42,7 @@
 
 + (instancetype)nodeWithPrimitive:(xmlKindPtr)kindPtr owner:(DDXMLNode *)owner
 {
+#pragma unused(kindPtr,owner)
 	// Promote initializers which use proper parameter types to enable compiler to catch more mistakes
 	NSAssert(NO, @"Use nodeWithElementPrimitive:owner:");
 	
@@ -50,6 +51,7 @@
 
 - (instancetype)initWithPrimitive:(xmlKindPtr)kindPtr owner:(DDXMLNode *)inOwner
 {
+#pragma unused(kindPtr,inOwner)
 	// Promote initializers which use proper parameter types to enable compiler to catch more mistakes.
 	NSAssert(NO, @"Use initWithElementPrimitive:owner:");
 	
@@ -153,17 +155,17 @@
 			
 			if (uri == nil)
 			{
-				match = xmlStrEqual(child->name, xmlName);
+				match = xmlStrEqual(child->name, xmlName) == 1;
 			}
 			else
 			{
-				BOOL nameMatch      = xmlStrEqual(child->name, xmlName);
-				BOOL localNameMatch = xmlStrEqual(child->name, xmlLocalName);
+				BOOL nameMatch      = xmlStrEqual(child->name, xmlName) == 1;
+				BOOL localNameMatch = xmlStrEqual(child->name, xmlLocalName) == 1;
 				
 				BOOL uriMatch = NO;
 				if (child->ns)
 				{
-					uriMatch = xmlStrEqual(child->ns->href, xmlUri);
+					uriMatch = xmlStrEqual(child->ns->href, xmlUri) == 1;
 				}
 				
 				if (hasPrefix)
@@ -247,7 +249,6 @@
 	}
 	else
 	{
-		NSString *prefix;
 		NSString *realLocalName;
 		
 		[DDXMLNode getPrefix:&prefix localName:&realLocalName forName:localName];
@@ -385,6 +386,42 @@
 				{
 					return [DDXMLAttributeNode nodeWithAttrPrimitive:attr owner:self];
 				}
+			}
+			
+			attr = attr->next;
+			
+		} while (attr);
+	}
+	return nil;
+}
+
+
+- (DDXMLNode *)attributeForLocalName:(NSString *)localName URI:(NSString *)URI
+{
+#if DDXML_DEBUG_MEMORY_ISSUES
+	DDXMLNotZombieAssert();
+#endif
+	xmlAttrPtr attr = ((xmlNodePtr)genericPtr)->properties;
+	if (attr)
+	{
+		const xmlChar *xmlName = [localName dd_xmlChar];
+        const xmlChar *xmlNS = [URI dd_xmlChar];
+		do
+		{
+			if (attr->ns && attr->ns->href)
+			{
+				// If the attribute name was originally something like "xml:quack",
+				// then attr->name is "quack" and attr->ns->prefix is "xml".
+				//
+				// So if the user is searching for "xml:quack" we need to take the prefix into account.
+				// Note that "xml:quack" is what would be printed if we output the attribute.
+				
+                if (xmlStrEqual( xmlNS, attr->ns->href)) {
+                    if (xmlStrEqual( xmlName, attr->name)) {
+                        return [DDXMLAttributeNode nodeWithAttrPrimitive:attr owner:self];
+                    }
+                }
+                
 			}
 			
 			attr = attr->next;

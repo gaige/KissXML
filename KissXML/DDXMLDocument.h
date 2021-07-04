@@ -34,9 +34,9 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (nullable instancetype)initWithXMLString:(NSString *)string options:(NSUInteger)mask error:(NSError **)error;
-//- (instancetype)initWithContentsOfURL:(NSURL *)url options:(NSUInteger)mask error:(NSError **)error;
+- (nullable instancetype)initWithContentsOfURL:(NSURL *)url options:(NSUInteger)mask error:(NSError **)error;
 - (nullable instancetype)initWithData:(NSData *)data options:(NSUInteger)mask error:(NSError **)error;
-//- (instancetype)initWithRootElement:(DDXMLElement *)element;
+- (nullable instancetype)initWithRootElement:(DDXMLElement *)element;
 
 //+ (Class)replacementClassForClass:(Class)cls;
 
@@ -58,7 +58,7 @@ NS_ASSUME_NONNULL_BEGIN
 //- (void)setDTD:(DDXMLDTD *)documentTypeDeclaration;
 //- (DDXMLDTD *)DTD;
 
-//- (void)setRootElement:(DDXMLNode *)root;
+- (void)setRootElement:(DDXMLNode *)root;
 - (nullable DDXMLElement *)rootElement;
 
 //- (void)insertChild:(DDXMLNode *)child atIndex:(NSUInteger)index;

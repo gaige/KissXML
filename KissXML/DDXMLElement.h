@@ -41,7 +41,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, copy) NSArray<DDXMLNode *> *attributes;
 //- (void)setAttributesAsDictionary:(NSDictionary *)attributes;
 - (nullable DDXMLNode *)attributeForName:(NSString *)name;
-//- (DDXMLNode *)attributeForLocalName:(NSString *)localName URI:(NSString *)URI;
+- (nullable DDXMLNode *)attributeForLocalName:(NSString *)localName URI:(NSString *)URI;
 
 #pragma mark --- Namespaces ---
 

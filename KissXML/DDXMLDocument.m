@@ -43,6 +43,7 @@
 
 + (instancetype)nodeWithPrimitive:(xmlKindPtr)kindPtr owner:(DDXMLNode *)owner
 {
+#pragma unused(kindPtr,owner)
 	// Promote initializers which use proper parameter types to enable compiler to catch more mistakes
 	NSAssert(NO, @"Use nodeWithDocPrimitive:owner:");
 	
@@ -51,10 +52,23 @@
 
 - (instancetype)initWithPrimitive:(xmlKindPtr)kindPtr owner:(DDXMLNode *)inOwner
 {
+#pragma unused(kindPtr,inOwner)
 	// Promote initializers which use proper parameter types to enable compiler to catch more mistakes.
 	NSAssert(NO, @"Use initWithDocPrimitive:owner:");
 	
 	return nil;
+}
+
+- (instancetype)initWithRootElement:(DDXMLElement *)element
+{
+	xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
+	if((self = [self initWithDocPrimitive: doc owner:nil])) {
+		if(element) {
+			[self setRootElement:element];
+		}
+    }
+	
+	return self;
 }
 
 /**
@@ -78,6 +92,7 @@
 **/
 - (instancetype)initWithData:(NSData *)data options:(NSUInteger)mask error:(NSError **)error
 {
+#pragma unused(mask)
 	if (data == nil || [data length] == 0)
 	{
 		if (error) *error = [NSError errorWithDomain:@"DDXMLErrorDomain" code:0 userInfo:nil];
@@ -124,6 +139,14 @@
 		return nil;
 }
 
+- (void)setRootElement:(DDXMLNode *)root
+{
+	xmlDocPtr doc = (xmlDocPtr)genericPtr;
+    xmlNodePtr copyRootPtr = xmlCopyNode((xmlNodePtr)root->genericPtr, 1);
+    
+	xmlDocSetRootElement(doc, (xmlNodePtr)copyRootPtr);
+}
+
 - (NSData *)XMLData
 {
 	// Zombie test occurs in XMLString
@@ -137,5 +160,45 @@
 	
 	return [[self XMLStringWithOptions:options] dataUsingEncoding:NSUTF8StringEncoding];
 }
+
+- (instancetype)initWithContentsOfURL:(NSURL*)url options:(NSUInteger)mask error:(NSError**)errorPtr
+{
+#pragma unused(mask)
+	if (!url) {
+		NSError *error=[NSError errorWithDomain: @"DDXMLErrorDomain" code:0 userInfo:nil];
+		if (errorPtr)
+			*errorPtr=error;
+		return nil;
+	}
+	if (![url isFileURL]) {
+		// EEK!
+		NSLog(@"Need file URL");
+		NSError *error=[NSError errorWithDomain: @"DDXMLErrorDomain" code:0 userInfo:nil];
+		if (errorPtr)
+			*errorPtr=error;
+		return nil;
+	}
+	
+	NSString *path = [url path];
+	xmlKeepBlanksDefault( 0);	// see initWithData:options:error:
+	xmlDocPtr doc= xmlParseFile( [path cStringUsingEncoding:NSUTF8StringEncoding]);
+    
+	if(doc == NULL)
+	{
+		if(errorPtr)
+			*errorPtr = [NSError errorWithDomain:@"DDXMLErrorDomain" code:1 userInfo:nil];
+		
+		return nil;
+	}
+	
+	self= [self initWithDocPrimitive: doc owner:nil];
+	if (!self) {
+		if (errorPtr)
+			*errorPtr = [NSError errorWithDomain:@"DDXMLErrorDomain" code:1 userInfo:nil];
+	}
+	
+	return self;
+}
+
 
 @end
